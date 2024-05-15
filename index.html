@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alphabet Permutation</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Permuter l'alphabet</h1>
+    <form id="seedForm">
+        <label for="seed">Entrez une seed :</label>
+        <input type="text" id="seed" name="seed" required>
+        <button type="submit">Permuter</button>
+    </form>
+
+    <table id="resultTable">
+        <thead>
+            <tr id="indexRow">
+                <th>Index</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="letterRow">
+                <td>Lettre</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        async function hashPermuteAlphabet(seed) {
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+        
+            const hashedValues = await Promise.all(alphabet.map(async letter => {
+                const data = new TextEncoder().encode(seed + letter);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                return { letter, hash: hashHex };
+            }));
+        
+            hashedValues.sort((a, b) => a.hash.localeCompare(b.hash));
+        
+            return hashedValues.map(item => item.letter).join('');
+        }
+
+        document.getElementById('seedForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const seed = document.getElementById('seed').value;
+            if (seed) {
+                const permutedAlphabet = await hashPermuteAlphabet(seed);
+                updateTable(permutedAlphabet);
+            }
+        });
+
+        function updateTable(permutedAlphabet) {
+            const indexRow = document.getElementById('indexRow');
+            const letterRow = document.getElementById('letterRow');
+
+            // Clear existing table data
+            indexRow.innerHTML = '<th>Index</th>';
+            letterRow.innerHTML = '<td>Lettre</td>';
+
+            // Populate table with new data
+            for (let i = 0; i < permutedAlphabet.length; i++) {
+                const indexCell = document.createElement('th');
+                indexCell.textContent = i + 1;
+                indexRow.appendChild(indexCell);
+
+                const letterCell = document.createElement('td');
+                letterCell.textContent = permutedAlphabet[i];
+                letterRow.appendChild(letterCell);
+            }
+        }
+    </script>
+
+</body>
+</html>
